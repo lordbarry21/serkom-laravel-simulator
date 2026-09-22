@@ -1,5 +1,15 @@
 import { create } from 'zustand';
-import { initialFileTree, initialVirtualFiles } from '@/data/laravelProjectTree';
+import {
+  BASE_LARAVEL_FILES,
+  FOOD_MCR_FILES,
+  ORDER_MCR_FILES,
+  ORDER_DETAIL_M_FILES,
+  FOOD_SEEDER_FILES,
+  BREEZE_BLADE_FILES,
+  buildFileTreeFromPaths,
+  initialFileTree,
+  initialVirtualFiles,
+} from '@/data/laravelProjectTree';
 import { simulatorModules } from '@/data/modulesData';
 import { createInitialMockDatabase } from '@/lib/mockDatabase';
 import { simulateTerminalCommand } from '@/lib/terminalSimulator';
@@ -9,12 +19,18 @@ import { FoodCategory, FoodItem, MockDatabase, OrderRecord, OrderStatus } from '
 import { CodeValidationResult, SimulatorModule, SimulatorStep, TerminalLogEntry } from '@/types/simulator';
 
 interface SimulatorStore {
-  // Modules and Step state
+  // Modules & Step State
   modules: SimulatorModule[];
   currentModuleId: number;
-  currentStepIndex: number; // 0-indexed within current module
+  currentStepIndex: number;
   completedStepIds: Set<string>;
-  criteriaStatus: Record<string, boolean>; // criterionId -> isCompleted
+  criteriaStatus: Record<string, boolean>;
+
+  // Project lifecycle state (starts from zero!)
+  isProjectCreated: boolean;
+  isMigrated: boolean;
+  isStorageLinked: boolean;
+  isBreezeInstalled: boolean;
 
   // VFS State
   virtualFiles: Record<string, string>;
@@ -33,6 +49,7 @@ interface SimulatorStore {
   hintLevel: number;
   isHintModalOpen: boolean;
   isGraduationModalOpen: boolean;
+  isPanduanModalOpen: boolean;
 
   // Preview & Mock DB State
   mockDb: MockDatabase;
@@ -66,6 +83,7 @@ interface SimulatorStore {
   setHintLevel: (level: number) => void;
   setIsHintModalOpen: (open: boolean) => void;
   setIsGraduationModalOpen: (open: boolean) => void;
+  setIsPanduanModalOpen: (open: boolean) => void;
 
   // Preview Actions
   setRightTab: (tab: 'terminal' | 'preview') => void;
@@ -82,8 +100,6 @@ interface SimulatorStore {
   resetAll: () => void;
 }
 
-const initialStep = simulatorModules[0].steps[0];
-
 export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
   modules: simulatorModules,
   currentModuleId: 1,
@@ -91,10 +107,16 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
   completedStepIds: new Set<string>(),
   criteriaStatus: {},
 
-  virtualFiles: { ...initialVirtualFiles },
-  fileTree: initialFileTree,
-  activeFilePath: initialStep.targetFilePath || '.env',
-  openTabs: [initialStep.targetFilePath || '.env'],
+  // Starts from 0: project not created yet!
+  isProjectCreated: false,
+  isMigrated: false,
+  isStorageLinked: false,
+  isBreezeInstalled: false,
+
+  virtualFiles: {},
+  fileTree: [],
+  activeFilePath: '',
+  openTabs: [],
 
   terminalLogs: [
     {
@@ -106,7 +128,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     {
       id: 'init-2',
       type: 'output',
-      content: 'Ikuti instruksi di panel kiri. Ketik perintah di shell ini atau edit kode di tengah.',
+      content: 'Workspace saat ini bersih dari 0. Silakan ikuti instruksi Langkah 1 untuk membuat proyek.',
       timestamp: Date.now() + 1,
     },
   ],
@@ -118,8 +140,15 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
   hintLevel: 0,
   isHintModalOpen: false,
   isGraduationModalOpen: false,
+  isPanduanModalOpen: false,
 
-  mockDb: createInitialMockDatabase(),
+  // Initially empty database before migrate:fresh --seed
+  mockDb: {
+    foods: [],
+    orders: [],
+    order_details: [],
+    users: [],
+  },
   activeRoute: '/',
   activeRightTab: 'terminal',
   activeCategoryFilter: 'all',
@@ -143,6 +172,11 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     const targetModule = modules.find((m) => m.id === moduleId);
     if (!targetModule) return;
 
+    // If moving to module 2, 3, or 4, auto-bootstrap necessary files if not yet created
+    if (moduleId > 1 && !get().isProjectCreated) {
+      get().applyAutocomplete();
+    }
+
     const firstStep = targetModule.steps[0];
     const newActiveFile = firstStep.targetFilePath || get().activeFilePath;
 
@@ -150,7 +184,10 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       currentModuleId: moduleId,
       currentStepIndex: 0,
       activeFilePath: newActiveFile,
-      openTabs: state.openTabs.includes(newActiveFile) ? state.openTabs : [...state.openTabs, newActiveFile],
+      openTabs:
+        newActiveFile && !state.openTabs.includes(newActiveFile)
+          ? [...state.openTabs, newActiveFile]
+          : state.openTabs,
       activeRightTab: firstStep.preferredTab || 'terminal',
       activeRoute: firstStep.defaultPreviewRoute || state.activeRoute,
       spotlightTarget: firstStep.spotlightTarget || null,
@@ -187,16 +224,13 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     const { modules, currentModuleId, currentStepIndex } = get();
     const currentModule = modules.find((m) => m.id === currentModuleId) || modules[0];
 
-    // Check if there is next step in current module
     if (currentStepIndex < currentModule.steps.length - 1) {
       get().setStep(currentModule.steps[currentStepIndex + 1].stepNumber);
     } else {
-      // Go to next module if available
       const nextModule = modules.find((m) => m.id === currentModuleId + 1);
       if (nextModule) {
         get().setModule(nextModule.id);
       } else {
-        // Last step of all modules reached!
         set({ isGraduationModalOpen: true });
       }
     }
@@ -258,7 +292,6 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
 
     set({ validationResult: result });
 
-    // Update criteria status for code_edit criteria
     const updatedCriteria = { ...criteriaStatus };
     for (const criterion of step.criteria) {
       if (criterion.type === 'code_edit') {
@@ -271,38 +304,77 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
 
   applyAutocomplete: () => {
     const step = get().getCurrentStep();
-    const { criteriaStatus } = get();
+    const { criteriaStatus, virtualFiles } = get();
 
-    // 1. If step has solution code and target file, inject it
-    if (step.targetFilePath && step.solutionCode) {
-      set((state) => ({
-        virtualFiles: {
-          ...state.virtualFiles,
-          [step.targetFilePath!]: step.solutionCode!,
-        },
-      }));
+    // Ensure base project files exist if step > 1
+    let updatedFiles = { ...virtualFiles };
+    let projectCreated = get().isProjectCreated;
+
+    if (!projectCreated) {
+      updatedFiles = { ...updatedFiles, ...BASE_LARAVEL_FILES };
+      projectCreated = true;
     }
 
-    // 2. Mark all step criteria as completed
+    // Ensure model/migration files exist depending on current step
+    if (step.moduleId >= 1) {
+      updatedFiles = {
+        ...updatedFiles,
+        ...FOOD_MCR_FILES,
+        ...ORDER_MCR_FILES,
+        ...ORDER_DETAIL_M_FILES,
+        ...FOOD_SEEDER_FILES,
+      };
+    }
+
+    if (step.moduleId >= 2) {
+      updatedFiles = {
+        ...updatedFiles,
+        ...BREEZE_BLADE_FILES,
+      };
+    }
+
+    // If step has solution code and target file, inject it
+    if (step.targetFilePath && step.solutionCode) {
+      updatedFiles[step.targetFilePath] = step.solutionCode;
+    }
+
+    const updatedTree = buildFileTreeFromPaths(updatedFiles);
+
+    // Mark criteria as complete
     const updatedCriteria = { ...criteriaStatus };
     for (const criterion of step.criteria) {
       updatedCriteria[criterion.id] = true;
     }
 
+    // If step is seeder or migrate, seed the mock DB
+    let newMockDb = get().mockDb;
+    let newMigrated = get().isMigrated;
+    if (step.stepNumber >= 6 && !newMigrated) {
+      newMockDb = createInitialMockDatabase();
+      newMigrated = true;
+    }
+
     set((state) => ({
+      isProjectCreated: projectCreated,
+      isMigrated: newMigrated,
+      virtualFiles: updatedFiles,
+      fileTree: updatedTree,
+      activeFilePath: step.targetFilePath || state.activeFilePath,
+      openTabs:
+        step.targetFilePath && !state.openTabs.includes(step.targetFilePath)
+          ? [...state.openTabs, step.targetFilePath]
+          : state.openTabs,
       criteriaStatus: updatedCriteria,
       validationResult: { isValid: true, missingRequirements: [], hasError: false },
       completedStepIds: new Set(state.completedStepIds).add(step.id),
-    }));
-
-    // Add note to terminal
-    set((state) => ({
+      mockDb: newMockDb,
+      terminalCwd: projectCreated ? '~/pesanmakan' : state.terminalCwd,
       terminalLogs: [
         ...state.terminalLogs,
         {
           id: `ac-${Date.now()}`,
           type: 'info',
-          content: `💡 Solusi otomatis diterapkan untuk langkah "${step.title}".`,
+          content: `💡 Solusi otomatis & file prasyarat diterapkan untuk langkah "${step.title}".`,
           timestamp: Date.now(),
         },
       ],
@@ -319,9 +391,9 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     }
 
     const step = get().getCurrentStep();
-    const { criteriaStatus } = get();
+    const { criteriaStatus, virtualFiles } = get();
 
-    // Add input log
+    // Input log
     const inputEntry: TerminalLogEntry = {
       id: `in-${Date.now()}`,
       type: 'input',
@@ -330,7 +402,6 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       timestamp: Date.now(),
     };
 
-    // Simulate command
     const execution = simulateTerminalCommand(trimmed, step.expectedCommands || [], step.title);
 
     const outputEntry: TerminalLogEntry = {
@@ -340,13 +411,79 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       timestamp: Date.now() + 1,
     };
 
-    // Update directory if cd
+    let newVirtualFiles = { ...virtualFiles };
+    let newProjectCreated = get().isProjectCreated;
     let newCwd = get().terminalCwd;
-    if (trimmed.toLowerCase().includes('cd pesanmakan')) {
+    let newMigrated = get().isMigrated;
+    let newStorageLinked = get().isStorageLinked;
+    let newBreezeInstalled = get().isBreezeInstalled;
+    let newMockDb = get().mockDb;
+    let newActiveFilePath = get().activeFilePath;
+    let newOpenTabs = [...get().openTabs];
+
+    const normalizedCmd = trimmed.toLowerCase().replace(/\s+/g, ' ');
+
+    // 1. composer create-project
+    if (normalizedCmd.includes('composer create-project')) {
+      newVirtualFiles = { ...newVirtualFiles, ...BASE_LARAVEL_FILES };
+      newProjectCreated = true;
+      newActiveFilePath = '.env';
+      newOpenTabs = ['.env'];
+    }
+
+    // 2. cd pesanmakan
+    if (normalizedCmd.includes('cd pesanmakan')) {
       newCwd = '~/pesanmakan';
     }
 
-    // Check if this fulfills any terminal_command criteria in current step
+    // 3. php artisan make:model Food -mcr
+    if (normalizedCmd.includes('make:model food')) {
+      newVirtualFiles = { ...newVirtualFiles, ...FOOD_MCR_FILES };
+      newActiveFilePath = 'database/migrations/2025_01_01_000001_create_foods_table.php';
+      if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
+    }
+
+    // 4. php artisan make:model Order -mcr
+    if (normalizedCmd.includes('make:model order') && !normalizedCmd.includes('orderdetail')) {
+      newVirtualFiles = { ...newVirtualFiles, ...ORDER_MCR_FILES };
+      newActiveFilePath = 'database/migrations/2025_01_01_000002_create_orders_table.php';
+      if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
+    }
+
+    // 5. php artisan make:model OrderDetail -m
+    if (normalizedCmd.includes('make:model orderdetail')) {
+      newVirtualFiles = { ...newVirtualFiles, ...ORDER_DETAIL_M_FILES };
+      newActiveFilePath = 'database/migrations/2025_01_01_000003_create_order_details_table.php';
+      if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
+    }
+
+    // 6. php artisan make:seeder FoodSeeder
+    if (normalizedCmd.includes('make:seeder foodseeder')) {
+      newVirtualFiles = { ...newVirtualFiles, ...FOOD_SEEDER_FILES };
+      newActiveFilePath = 'database/seeders/FoodSeeder.php';
+      if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
+    }
+
+    // 7. Breeze install
+    if (normalizedCmd.includes('breeze:install') || normalizedCmd.includes('require laravel/breeze')) {
+      newVirtualFiles = { ...newVirtualFiles, ...BREEZE_BLADE_FILES };
+      newBreezeInstalled = true;
+    }
+
+    // 8. storage:link
+    if (normalizedCmd.includes('storage:link')) {
+      newStorageLinked = true;
+    }
+
+    // 9. migrate:fresh --seed
+    if (normalizedCmd.includes('migrate:fresh') || (normalizedCmd.includes('migrate') && normalizedCmd.includes('--seed'))) {
+      newMigrated = true;
+      newMockDb = createInitialMockDatabase();
+    }
+
+    const updatedTree = buildFileTreeFromPaths(newVirtualFiles);
+
+    // Evaluate criteria
     const updatedCriteria = { ...criteriaStatus };
     let hasMetCriterion = false;
 
@@ -355,8 +492,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
         const isMatched =
           execution.isTargetMet ||
           (criterion.targetCommand &&
-            trimmed.toLowerCase().replace(/\s+/g, ' ') ===
-              criterion.targetCommand.toLowerCase().replace(/\s+/g, ' '));
+            normalizedCmd === criterion.targetCommand.toLowerCase().replace(/\s+/g, ' '));
 
         if (isMatched) {
           updatedCriteria[criterion.id] = true;
@@ -365,17 +501,21 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       }
     }
 
-    // If storage:link or migrate:fresh was executed, update preview capabilities
-    if (trimmed.toLowerCase().includes('storage:link') || trimmed.toLowerCase().includes('migrate:fresh')) {
-      hasMetCriterion = true;
-    }
-
     set((state) => ({
       terminalLogs: [...state.terminalLogs, inputEntry, outputEntry],
       commandHistory: [...state.commandHistory, trimmed],
       historyIndex: -1,
       terminalCwd: newCwd,
       criteriaStatus: updatedCriteria,
+      isProjectCreated: newProjectCreated,
+      isMigrated: newMigrated,
+      isStorageLinked: newStorageLinked,
+      isBreezeInstalled: newBreezeInstalled,
+      mockDb: newMockDb,
+      virtualFiles: newVirtualFiles,
+      fileTree: updatedTree,
+      activeFilePath: newActiveFilePath || state.activeFilePath,
+      openTabs: newOpenTabs.length > 0 ? newOpenTabs : state.openTabs,
     }));
 
     if (hasMetCriterion) {
@@ -399,6 +539,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
   setHintLevel: (level: number) => set({ hintLevel: level }),
   setIsHintModalOpen: (open: boolean) => set({ isHintModalOpen: open }),
   setIsGraduationModalOpen: (open: boolean) => set({ isGraduationModalOpen: open }),
+  setIsPanduanModalOpen: (open: boolean) => set({ isPanduanModalOpen: open }),
 
   setRightTab: (tab: 'terminal' | 'preview') => set({ activeRightTab: tab }),
   setPreviewRoute: (route: string) => set({ activeRoute: route }),
@@ -450,7 +591,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       },
     }));
 
-    // Check step 14 criterion
+    // Step 14 ui_action check
     const step = get().getCurrentStep();
     if (step.id === 'm3-step-14') {
       const updatedCriteria = { ...criteriaStatus };
@@ -482,7 +623,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       },
     }));
 
-    // Check step 18 criterion
+    // Step 18 ui_action check
     const step = get().getCurrentStep();
     if (step.id === 'm4-step-18') {
       const updatedCriteria = { ...criteriaStatus };
@@ -529,23 +670,30 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       currentStepIndex: 0,
       completedStepIds: new Set<string>(),
       criteriaStatus: {},
-      virtualFiles: { ...initialVirtualFiles },
-      activeFilePath: '.env',
-      openTabs: ['.env'],
+      isProjectCreated: false,
+      isMigrated: false,
+      isStorageLinked: false,
+      isBreezeInstalled: false,
+      virtualFiles: {},
+      fileTree: [],
+      activeFilePath: '',
+      openTabs: [],
       terminalLogs: [
         {
           id: 'init-1',
           type: 'info',
-          content: 'Simulator di-reset ke kondisi awal.',
+          content: 'Simulator di-reset ke kondisi awal dari 0.',
           timestamp: Date.now(),
         },
       ],
-      mockDb: createInitialMockDatabase(),
+      terminalCwd: '~',
+      mockDb: { foods: [], orders: [], order_details: [], users: [] },
       activeRoute: '/',
       activeRightTab: 'terminal',
       activeCategoryFilter: 'all',
       spotlightTarget: null,
       isGraduationModalOpen: false,
+      isPanduanModalOpen: false,
     });
     get().validateCurrentFile();
   },

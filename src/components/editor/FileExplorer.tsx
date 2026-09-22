@@ -126,8 +126,22 @@ export function FileExplorer() {
         <span className="text-[10px] text-zinc-500">pesanmakan</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5 no-scrollbar">
-        {fileTree.map((node) => renderNode(node, 0))}
+      <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+        {fileTree.length === 0 ? (
+          <div className="p-3 text-center space-y-2 mt-6">
+            <div className="text-[11px] font-semibold text-zinc-400">
+              Workspace Kosong (Mulai dari 0)
+            </div>
+            <p className="text-[10px] text-zinc-500 leading-relaxed">
+              Jalankan perintah di terminal untuk membuat proyek:
+            </p>
+            <div className="p-2 rounded bg-zinc-900 border border-zinc-800 font-mono text-[10px] text-emerald-400 break-all text-left">
+              composer create-project laravel/laravel pesanmakan
+            </div>
+          </div>
+        ) : (
+          fileTree.map((node) => renderNode(node, 0))
+        )}
       </div>
     </div>
   );

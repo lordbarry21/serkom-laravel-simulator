@@ -13,6 +13,7 @@ export function Header() {
     resetAll,
     activeRightTab,
     setRightTab,
+    setIsPanduanModalOpen,
   } = useSimulatorStore();
 
   const currentModule = modules.find((m) => m.id === currentModuleId) || modules[0];
@@ -109,15 +110,25 @@ export function Header() {
           </button>
         </div>
 
+        {/* Panduan & Mindmap Button */}
+        <button
+          onClick={() => setIsPanduanModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-md shadow-red-950/40 transition"
+          title="Buka Buku Panduan, Mindmap & Tabel Sintaks Keramat"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Buku Panduan &amp; Mindmap</span>
+        </button>
+
         {/* Reset button */}
         <button
           onClick={() => {
-            if (window.confirm('Reset seluruh progress ke kondisi awal?')) {
+            if (window.confirm('Reset seluruh progress ke kondisi awal (dari 0)?')) {
               resetAll();
             }
           }}
           className="p-1.5 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-zinc-800/70 transition"
-          title="Reset Simulator"
+          title="Reset Simulator ke Nol"
         >
           <RotateCcw className="w-4 h-4" />
         </button>

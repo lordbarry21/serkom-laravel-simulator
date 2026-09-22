@@ -9,6 +9,7 @@ import { VirtualTerminal } from '../terminal/VirtualTerminal';
 import { PreviewPanel } from '../preview/PreviewPanel';
 import { HintModal } from '../guide/HintModal';
 import { CompletionModal } from '../guide/CompletionModal';
+import { PanduanModal } from '../guide/PanduanModal';
 
 export function ThreePanelLayout() {
   const { activeRightTab, setRightTab } = useSimulatorStore();
@@ -70,6 +71,7 @@ export function ThreePanelLayout() {
       {/* Modals */}
       <HintModal />
       <CompletionModal />
+      <PanduanModal />
     </div>
   );
 }

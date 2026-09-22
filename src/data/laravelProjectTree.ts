@@ -12,7 +12,7 @@ export function detectLanguageFromPath(path: string): SupportedLanguage {
   return 'php';
 }
 
-export const initialVirtualFiles: Record<string, string> = {
+export const BASE_LARAVEL_FILES: Record<string, string> = {
   '.env': `APP_NAME="Pesan Makan Serkom"
 APP_ENV=local
 APP_KEY=base64:7B5qL2j3K9s1P8x4M0v7R6t2W5y8Z1c4V3b9N0m2Q5=
@@ -25,11 +25,11 @@ APP_FALLBACK_LOCALE=en
 APP_FAKER_LOCALE=id_ID
 
 DB_CONNECTION=sqlite
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=restaurant_db
-# DB_USERNAME=root
-# DB_PASSWORD=
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=restaurant_db
+DB_USERNAME=root
+DB_PASSWORD=
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
@@ -48,17 +48,9 @@ SESSION_LIFETIME=120
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "laravel/breeze": "^2.0",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
         "phpunit/phpunit": "^11.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\\\": "app/",
-            "Database\\\\Factories\\\\": "database/factories/",
-            "Database\\\\Seeders\\\\": "database/seeders/"
-        }
     }
 }
 `,
@@ -81,147 +73,6 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-}
-`,
-
-  'app/Models/Food.php': `<?php
-
-namespace App\\Models;
-
-use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
-use Illuminate\\Database\\Eloquent\\Model;
-
-class Food extends Model
-{
-    use HasFactory;
-
-    // TODO Step 3: Tambahkan properti $guarded dan relasi orderDetails()
-}
-`,
-
-  'app/Models/Order.php': `<?php
-
-namespace App\\Models;
-
-use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
-use Illuminate\\Database\\Eloquent\\Model;
-
-class Order extends Model
-{
-    use HasFactory;
-
-    // TODO Step 3: Tambahkan properti $guarded dan relasi orderDetails()
-}
-`,
-
-  'app/Models/OrderDetail.php': `<?php
-
-namespace App\\Models;
-
-use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
-use Illuminate\\Database\\Eloquent\\Model;
-
-class OrderDetail extends Model
-{
-    use HasFactory;
-
-    // TODO Step 3: Tambahkan properti $guarded dan relasi order() & food()
-}
-`,
-
-  'database/migrations/2025_01_01_000001_create_foods_table.php': `<?php
-
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('foods', function (Blueprint $table) {
-            $table->id();
-            // TODO Step 2: Lengkapi kolom name, category, price, description, image
-            $table->timestamps();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('foods');
-    }
-};
-`,
-
-  'database/migrations/2025_01_01_000002_create_orders_table.php': `<?php
-
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('orders', function (Blueprint $table) {
-            $table->id();
-            // TODO Step 2: Lengkapi kolom customer_name, table_number, total_price, status
-            $table->timestamps();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('orders');
-    }
-};
-`,
-
-  'database/migrations/2025_01_01_000003_create_order_details_table.php': `<?php
-
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\Schema;
-
-return new class extends Migration
-{
-    public function up(): void
-    {
-        Schema::create('order_details', function (Blueprint $table) {
-            $table->id();
-            // TODO Step 2: Lengkapi relasi order_id (cascade), food_id, quantity, subtotal
-            $table->timestamps();
-        });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('order_details');
-    }
-};
-`,
-
-  'database/seeders/FoodSeeder.php': `<?php
-
-namespace Database\\Seeders;
-
-use Illuminate\\Database\\Seeder;
-use App\\Models\\Food;
-
-class FoodSeeder extends Seeder
-{
-    public function run(): void
-    {
-        // TODO Step 4: Masukkan 5 data menu makanan dan minuman awal
-    }
 }
 `,
 
@@ -237,19 +88,59 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // TODO Step 4: Panggil FoodSeeder dan buat akun admin default
+        // TODO Step 6: Buat user admin default dan panggil FoodSeeder
     }
 }
 `,
 
-  'app/Http/Controllers/Controller.php': `<?php
+  'routes/web.php': `<?php
 
-namespace App\\Http\\Controllers;
+use Illuminate\\Support\\Facades\\Route;
 
-abstract class Controller
+Route::get('/', function () {
+    return view('welcome');
+});
+`,
+};
+
+export const FOOD_MCR_FILES: Record<string, string> = {
+  'app/Models/Food.php': `<?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Food extends Model
 {
-    //
+    use HasFactory;
+
+    // TODO Step 5: Tambahkan properti $table dan $guarded
 }
+`,
+
+  'database/migrations/2025_01_01_000001_create_foods_table.php': `<?php
+
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('foods', function (Blueprint $table) {
+            $table->id();
+            // TODO Step 3: Lengkapi kolom name, category enum, price, description, image
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('foods');
+    }
+};
 `,
 
   'app/Http/Controllers/FoodController.php': `<?php
@@ -262,8 +153,49 @@ use Illuminate\\Support\\Facades\\Storage;
 
 class FoodController extends Controller
 {
-    // TODO Modul 2: Implementasikan index, create, store, edit, update, destroy
+    // TODO Step 8: Implementasikan method index, create, store, edit, update, destroy
 }
+`,
+};
+
+export const ORDER_MCR_FILES: Record<string, string> = {
+  'app/Models/Order.php': `<?php
+
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class Order extends Model
+{
+    use HasFactory;
+
+    // TODO Step 5: Tambahkan properti $guarded dan relasi orderDetails()
+}
+`,
+
+  'database/migrations/2025_01_01_000002_create_orders_table.php': `<?php
+
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('orders', function (Blueprint $table) {
+            $table->id();
+            // TODO Step 4: Lengkapi kolom customer_name, table_number, total_price, status
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('orders');
+    }
+};
 `,
 
   'app/Http/Controllers/OrderController.php': `<?php
@@ -278,307 +210,152 @@ use Illuminate\\Support\\Facades\\DB;
 
 class OrderController extends Controller
 {
-    // TODO Modul 3 & 4: Implementasikan index, store, adminDashboard, updateStatus
+    // TODO Step 11 & 16: Implementasikan index, store, adminDashboard, updateStatus
 }
-`,
-
-  'resources/views/foods/index.blade.php': `{{-- TODO Step 9: Tampilan Master Data Makanan (Admin) --}}
-`,
-
-  'resources/views/foods/create.blade.php': `{{-- TODO Step 10: Form Tambah Menu Makanan --}}
-`,
-
-  'resources/views/foods/edit.blade.php': `{{-- TODO Step 10: Form Edit Menu Makanan --}}
-`,
-
-  'resources/views/customer/index.blade.php': `{{-- TODO Step 12 & 13: Katalog Pelanggan & JavaScript Modal Checkout --}}
-`,
-
-  'resources/views/dashboard.blade.php': `{{-- TODO Step 19: Dashboard Rekap Pesanan Admin --}}
-`,
-
-  'routes/web.php': `<?php
-
-use Illuminate\\Support\\Facades\\Route;
-use App\\Http\\Controllers\\FoodController;
-use App\\Http\\Controllers\\OrderController;
-
-// TODO Modul 4: Susun rute publik dan grup admin auth
-Route::get('/', function () {
-    return view('welcome');
-});
-`,
-
-  'routes/auth.php': `<?php
-
-use App\\Http\\Controllers\\Auth\\AuthenticatedSessionController;
-use Illuminate\\Support\\Facades\\Route;
-
-Route::middleware('guest')->group(function () {
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
-});
-
-Route::middleware('auth')->group(function () {
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
-});
 `,
 };
 
-export const initialFileTree: FileTreeNode[] = [
-  {
-    id: 'app',
-    name: 'app',
-    path: 'app',
-    type: 'directory',
-    isExpanded: true,
-    children: [
-      {
-        id: 'app/Http',
-        name: 'Http',
-        path: 'app/Http',
-        type: 'directory',
-        isExpanded: true,
-        children: [
-          {
-            id: 'app/Http/Controllers',
-            name: 'Controllers',
-            path: 'app/Http/Controllers',
-            type: 'directory',
-            isExpanded: true,
-            children: [
-              {
-                id: 'app/Http/Controllers/Controller.php',
-                name: 'Controller.php',
-                path: 'app/Http/Controllers/Controller.php',
-                type: 'file',
-                language: 'php',
-              },
-              {
-                id: 'app/Http/Controllers/FoodController.php',
-                name: 'FoodController.php',
-                path: 'app/Http/Controllers/FoodController.php',
-                type: 'file',
-                language: 'php',
-              },
-              {
-                id: 'app/Http/Controllers/OrderController.php',
-                name: 'OrderController.php',
-                path: 'app/Http/Controllers/OrderController.php',
-                type: 'file',
-                language: 'php',
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'app/Models',
-        name: 'Models',
-        path: 'app/Models',
-        type: 'directory',
-        isExpanded: true,
-        children: [
-          {
-            id: 'app/Models/User.php',
-            name: 'User.php',
-            path: 'app/Models/User.php',
-            type: 'file',
-            language: 'php',
-          },
-          {
-            id: 'app/Models/Food.php',
-            name: 'Food.php',
-            path: 'app/Models/Food.php',
-            type: 'file',
-            language: 'php',
-          },
-          {
-            id: 'app/Models/Order.php',
-            name: 'Order.php',
-            path: 'app/Models/Order.php',
-            type: 'file',
-            language: 'php',
-          },
-          {
-            id: 'app/Models/OrderDetail.php',
-            name: 'OrderDetail.php',
-            path: 'app/Models/OrderDetail.php',
-            type: 'file',
-            language: 'php',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'database',
-    name: 'database',
-    path: 'database',
-    type: 'directory',
-    isExpanded: true,
-    children: [
-      {
-        id: 'database/migrations',
-        name: 'migrations',
-        path: 'database/migrations',
-        type: 'directory',
-        isExpanded: true,
-        children: [
-          {
-            id: 'database/migrations/2025_01_01_000001_create_foods_table.php',
-            name: '2025_01_01_000001_create_foods_table.php',
-            path: 'database/migrations/2025_01_01_000001_create_foods_table.php',
-            type: 'file',
-            language: 'php',
-          },
-          {
-            id: 'database/migrations/2025_01_01_000002_create_orders_table.php',
-            name: '2025_01_01_000002_create_orders_table.php',
-            path: 'database/migrations/2025_01_01_000002_create_orders_table.php',
-            type: 'file',
-            language: 'php',
-          },
-          {
-            id: 'database/migrations/2025_01_01_000003_create_order_details_table.php',
-            name: '2025_01_01_000003_create_order_details_table.php',
-            path: 'database/migrations/2025_01_01_000003_create_order_details_table.php',
-            type: 'file',
-            language: 'php',
-          },
-        ],
-      },
-      {
-        id: 'database/seeders',
-        name: 'seeders',
-        path: 'database/seeders',
-        type: 'directory',
-        isExpanded: true,
-        children: [
-          {
-            id: 'database/seeders/DatabaseSeeder.php',
-            name: 'DatabaseSeeder.php',
-            path: 'database/seeders/DatabaseSeeder.php',
-            type: 'file',
-            language: 'php',
-          },
-          {
-            id: 'database/seeders/FoodSeeder.php',
-            name: 'FoodSeeder.php',
-            path: 'database/seeders/FoodSeeder.php',
-            type: 'file',
-            language: 'php',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'resources',
-    name: 'resources',
-    path: 'resources',
-    type: 'directory',
-    isExpanded: true,
-    children: [
-      {
-        id: 'resources/views',
-        name: 'views',
-        path: 'resources/views',
-        type: 'directory',
-        isExpanded: true,
-        children: [
-          {
-            id: 'resources/views/customer',
-            name: 'customer',
-            path: 'resources/views/customer',
-            type: 'directory',
-            isExpanded: true,
-            children: [
-              {
-                id: 'resources/views/customer/index.blade.php',
-                name: 'index.blade.php',
-                path: 'resources/views/customer/index.blade.php',
-                type: 'file',
-                language: 'blade',
-              },
-            ],
-          },
-          {
-            id: 'resources/views/foods',
-            name: 'foods',
-            path: 'resources/views/foods',
-            type: 'directory',
-            isExpanded: true,
-            children: [
-              {
-                id: 'resources/views/foods/index.blade.php',
-                name: 'index.blade.php',
-                path: 'resources/views/foods/index.blade.php',
-                type: 'file',
-                language: 'blade',
-              },
-              {
-                id: 'resources/views/foods/create.blade.php',
-                name: 'create.blade.php',
-                path: 'resources/views/foods/create.blade.php',
-                type: 'file',
-                language: 'blade',
-              },
-              {
-                id: 'resources/views/foods/edit.blade.php',
-                name: 'edit.blade.php',
-                path: 'resources/views/foods/edit.blade.php',
-                type: 'file',
-                language: 'blade',
-              },
-            ],
-          },
-          {
-            id: 'resources/views/dashboard.blade.php',
-            name: 'dashboard.blade.php',
-            path: 'resources/views/dashboard.blade.php',
-            type: 'file',
-            language: 'blade',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'routes',
-    name: 'routes',
-    path: 'routes',
-    type: 'directory',
-    isExpanded: true,
-    children: [
-      {
-        id: 'routes/web.php',
-        name: 'web.php',
-        path: 'routes/web.php',
+export const ORDER_DETAIL_M_FILES: Record<string, string> = {
+  'app/Models/OrderDetail.php': `<?php
+
+namespace App\\Models\\OrderDetail;
+namespace App\\Models;
+
+use Illuminate\\Database\\Eloquent\\Factories\\HasFactory;
+use Illuminate\\Database\\Eloquent\\Model;
+
+class OrderDetail extends Model
+{
+    use HasFactory;
+
+    // TODO Step 5: Tambahkan properti $table, $guarded, relasi food() dan order()
+}
+`,
+
+  'database/migrations/2025_01_01_000003_create_order_details_table.php': `<?php
+
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('order_details', function (Blueprint $table) {
+            $table->id();
+            // TODO Step 4: Sambungkan order_id dan food_id cascade serta quantity & subtotal
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('order_details');
+    }
+};
+`,
+};
+
+export const FOOD_SEEDER_FILES: Record<string, string> = {
+  'database/seeders/FoodSeeder.php': `<?php
+
+namespace Database\\Seeders;
+
+use Illuminate\\Database\\Seeder;
+use Illuminate\\Support\\Facades\\DB;
+
+class FoodSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // TODO Step 6: Masukkan 5 data menu makanan dan minuman awal
+    }
+}
+`,
+};
+
+export const BREEZE_BLADE_FILES: Record<string, string> = {
+  'resources/views/foods/index.blade.php': `{{-- TODO Step 9: Tampilan Master Data Makanan (Admin) --}}
+`,
+  'resources/views/foods/create.blade.php': `{{-- TODO Step 10: Form Tambah Menu Makanan --}}
+`,
+  'resources/views/foods/edit.blade.php': `{{-- TODO Step 10: Form Edit Menu Makanan --}}
+`,
+  'resources/views/customer/index.blade.php': `{{-- TODO Step 12 & 13: Katalog Pelanggan & JavaScript Modal Checkout --}}
+`,
+  'resources/views/dashboard.blade.php': `{{-- TODO Step 17: Dashboard Rekap Pesanan Admin --}}
+`,
+};
+
+// Convert flat path map into nested FileTreeNode[] hierarchy
+export function buildFileTreeFromPaths(files: Record<string, string>): FileTreeNode[] {
+  const rootNodes: FileTreeNode[] = [];
+  const dirMap = new Map<string, FileTreeNode>();
+
+  // Sort paths so parents are processed before or consistently with children
+  const sortedPaths = Object.keys(files).sort();
+
+  for (const filePath of sortedPaths) {
+    const segments = filePath.split('/');
+
+    if (segments.length === 1) {
+      // Root file (e.g. .env, composer.json)
+      rootNodes.push({
+        id: filePath,
+        name: filePath,
+        path: filePath,
         type: 'file',
-        language: 'php',
-      },
-      {
-        id: 'routes/auth.php',
-        name: 'auth.php',
-        path: 'routes/auth.php',
+        language: detectLanguageFromPath(filePath),
+      });
+      continue;
+    }
+
+    let currentPath = '';
+    let parentNode: FileTreeNode | null = null;
+
+    for (let i = 0; i < segments.length - 1; i++) {
+      const segment = segments[i];
+      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+
+      if (!dirMap.has(currentPath)) {
+        const newDir: FileTreeNode = {
+          id: currentPath,
+          name: segment,
+          path: currentPath,
+          type: 'directory',
+          isExpanded: true,
+          children: [],
+        };
+        dirMap.set(currentPath, newDir);
+
+        if (parentNode) {
+          parentNode.children = parentNode.children || [];
+          parentNode.children.push(newDir);
+        } else {
+          rootNodes.push(newDir);
+        }
+      }
+      parentNode = dirMap.get(currentPath)!;
+    }
+
+    // Leaf file
+    const fileName = segments[segments.length - 1];
+    if (parentNode) {
+      parentNode.children = parentNode.children || [];
+      parentNode.children.push({
+        id: filePath,
+        name: fileName,
+        path: filePath,
         type: 'file',
-        language: 'php',
-      },
-    ],
-  },
-  {
-    id: '.env',
-    name: '.env',
-    path: '.env',
-    type: 'file',
-    language: 'env',
-  },
-  {
-    id: 'composer.json',
-    name: 'composer.json',
-    path: 'composer.json',
-    type: 'file',
-    language: 'json',
-  },
-];
+        language: detectLanguageFromPath(filePath),
+      });
+    }
+  }
+
+  return rootNodes;
+}
+
+// Initial state starts completely EMPTY until student runs composer create-project
+export const initialVirtualFiles: Record<string, string> = {};
+export const initialFileTree: FileTreeNode[] = [];
