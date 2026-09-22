@@ -5,6 +5,7 @@ import { BookOpen, FileCode, Lightbulb, Sparkles, Terminal } from 'lucide-react'
 import { useSimulatorStore } from '@/store/useSimulatorStore';
 import { CriteriaChecklist } from './CriteriaChecklist';
 import { StepNavigation } from '../layout/StepNavigation';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export function InstructionPanel() {
   const { getCurrentStep, openFile, setRightTab } = useSimulatorStore();
@@ -56,15 +57,16 @@ export function InstructionPanel() {
         {/* Live Criteria Checklist */}
         <CriteriaChecklist />
 
-        {/* Formatted Markdown Instructions */}
-        <div className="bg-[#18181b]/50 border border-zinc-800/80 rounded-xl p-3.5 space-y-2.5">
-          <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-zinc-400" />
-            <span>Panduan & Alur Eksekusi:</span>
-          </h4>
-          <div className="text-xs text-zinc-300 whitespace-pre-line leading-relaxed font-sans space-y-2">
-            {currentStep.descriptionMarkdown}
+        {/* Formatted Markdown Instructions with IDE Syntax Highlighting */}
+        <div className="bg-[#18181b]/70 border border-zinc-800/80 rounded-xl p-3.5 space-y-2.5 shadow-sm">
+          <div className="flex items-center justify-between pb-1 border-b border-zinc-800/80">
+            <h4 className="text-xs font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-red-400" />
+              <span>PANDUAN &amp; ALUR EKSEKUSI:</span>
+            </h4>
+            <span className="text-[10px] font-semibold text-zinc-500">IDE Highlighting</span>
           </div>
+          <MarkdownRenderer content={currentStep.descriptionMarkdown} />
         </div>
 
         {/* Quick Target Switcher */}
