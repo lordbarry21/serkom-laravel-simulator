@@ -257,6 +257,27 @@ return new class extends Migration
 `,
 };
 
+export const UNWANTED_ORDER_DETAIL_CONTROLLER = `<?php
+
+namespace App\\Http\\Controllers;
+
+use App\\Models\\OrderDetail;
+use Illuminate\\Http\\Request;
+
+/**
+ * ⚠️ PERINGATAN: File controller ini TIDAK DIBUTUHKAN pada modul Serkom!
+ * Logika order detail diproses langsung di OrderController (Step 11).
+ * Menjalankan -mcr pada OrderDetail menciptakan controller berlebih yang melanggar arsitektur modul.
+ */
+class OrderDetailController extends Controller
+{
+    public function index()
+    {
+        // Controller ini tidak digunakan dalam aplikasi Serkom.
+    }
+}
+`;
+
 export const FOOD_SEEDER_FILES: Record<string, string> = {
   'database/seeders/FoodSeeder.php': `<?php
 

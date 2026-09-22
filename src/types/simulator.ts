@@ -1,3 +1,5 @@
+import { FileTreeNode } from './laravelFileSystem';
+
 export type CriterionType = 'terminal_command' | 'code_edit' | 'ui_action';
 
 export interface StepCriterion {
@@ -47,12 +49,36 @@ export interface SimulatorModule {
   steps: SimulatorStep[];
 }
 
+export interface TerminalSnapshot {
+  virtualFiles: Record<string, string>;
+  fileTree: FileTreeNode[];
+  activeFilePath: string;
+  openTabs: string[];
+  criteriaStatus: Record<string, boolean>;
+  terminalCwd: string;
+  isProjectCreated: boolean;
+  isMigrated: boolean;
+  isStorageLinked: boolean;
+  isBreezeInstalled: boolean;
+}
+
+export interface TerminalMistake {
+  id: string;
+  rawCommand: string;
+  expectedCommands: string[];
+  reasonTitle: string;
+  explanation: string;
+  createdFiles?: string[];
+  snapshot: TerminalSnapshot;
+}
+
 export interface TerminalLogEntry {
   id: string;
-  type: 'input' | 'output' | 'error' | 'success' | 'info' | 'artisan';
+  type: 'input' | 'output' | 'error' | 'success' | 'info' | 'artisan' | 'warning' | 'rollback';
   content: string;
   timestamp: number;
   command?: string;
+  mistake?: TerminalMistake;
 }
 
 export interface CodeValidationResult {
@@ -62,3 +88,4 @@ export interface CodeValidationResult {
   hasError: boolean;
   errorMessage?: string;
 }
+

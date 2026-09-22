@@ -16,7 +16,14 @@ import { simulateTerminalCommand } from '@/lib/terminalSimulator';
 import { validateCodeContent } from '@/lib/validator';
 import { FileTreeNode } from '@/types/laravelFileSystem';
 import { FoodCategory, FoodItem, MockDatabase, OrderRecord, OrderStatus } from '@/types/preview';
-import { CodeValidationResult, SimulatorModule, SimulatorStep, TerminalLogEntry } from '@/types/simulator';
+import {
+  CodeValidationResult,
+  SimulatorModule,
+  SimulatorStep,
+  TerminalLogEntry,
+  TerminalMistake,
+  TerminalSnapshot,
+} from '@/types/simulator';
 
 interface SimulatorStore {
   // Modules & Step State
@@ -43,6 +50,7 @@ interface SimulatorStore {
   commandHistory: string[];
   historyIndex: number;
   terminalCwd: string;
+  activeMistake: TerminalMistake | null;
 
   // Code Validation State
   validationResult: CodeValidationResult;
@@ -77,6 +85,7 @@ interface SimulatorStore {
 
   // Terminal Actions
   executeTerminalCommand: (command: string) => void;
+  undoMistake: () => void;
   clearTerminal: () => void;
 
   // Hint & Modal
@@ -129,6 +138,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
   commandHistory: [],
   historyIndex: -1,
   terminalCwd: 'C:\\laragon\\www',
+  activeMistake: null,
 
   validationResult: { isValid: false, missingRequirements: [], hasError: false },
   hintLevel: 0,
@@ -186,6 +196,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       activeRoute: firstStep.defaultPreviewRoute || state.activeRoute,
       spotlightTarget: firstStep.spotlightTarget || null,
       hintLevel: 0,
+      activeMistake: null,
     }));
     get().validateCurrentFile();
   },
@@ -210,6 +221,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       activeRoute: step.defaultPreviewRoute || state.activeRoute,
       spotlightTarget: step.spotlightTarget || null,
       hintLevel: 0,
+      activeMistake: null,
     }));
     get().validateCurrentFile();
   },
@@ -384,10 +396,78 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       return;
     }
 
+    const { activeMistake, virtualFiles, criteriaStatus } = get();
     const step = get().getCurrentStep();
-    const { criteriaStatus, virtualFiles } = get();
 
-    // Input log
+    // 1. If a mistake is currently active, the user MUST undo!
+    if (activeMistake) {
+      if (trimmed.toLowerCase() === 'undo') {
+        get().undoMistake();
+        return;
+      }
+
+      set((state) => ({
+        terminalLogs: [
+          ...state.terminalLogs,
+          {
+            id: `in-${Date.now()}`,
+            type: 'input',
+            content: trimmed,
+            command: trimmed,
+            timestamp: Date.now(),
+          },
+          {
+            id: `warn-${Date.now()}`,
+            type: 'warning',
+            content:
+              '⚠️ Anda WAJIB membatalkan (Undo) perintah sebelumnya terlebih dahulu!\n' +
+              'Klik tombol "↩️ Batalkan Perintah & Hapus File Berlebih (Undo)" di atas atau ketik "undo".',
+            timestamp: Date.now() + 1,
+          },
+        ],
+      }));
+      return;
+    }
+
+    // 2. If user types "undo" when there is no mistake pending
+    if (trimmed.toLowerCase() === 'undo') {
+      set((state) => ({
+        terminalLogs: [
+          ...state.terminalLogs,
+          {
+            id: `in-${Date.now()}`,
+            type: 'input',
+            content: trimmed,
+            command: trimmed,
+            timestamp: Date.now(),
+          },
+          {
+            id: `info-${Date.now()}`,
+            type: 'info',
+            content:
+              'Tidak ada perintah keliru yang perlu dibatalkan (Undo). Silakan lanjutkan mengetik perintah sesuai modul.',
+            timestamp: Date.now() + 1,
+          },
+        ],
+      }));
+      return;
+    }
+
+    // 3. Take snapshot of workspace state BEFORE executing the command
+    const snapshot: TerminalSnapshot = {
+      virtualFiles: { ...virtualFiles },
+      fileTree: [...get().fileTree],
+      activeFilePath: get().activeFilePath,
+      openTabs: [...get().openTabs],
+      criteriaStatus: { ...criteriaStatus },
+      terminalCwd: get().terminalCwd,
+      isProjectCreated: get().isProjectCreated,
+      isMigrated: get().isMigrated,
+      isStorageLinked: get().isStorageLinked,
+      isBreezeInstalled: get().isBreezeInstalled,
+    };
+
+    // User input log entry
     const inputEntry: TerminalLogEntry = {
       id: `in-${Date.now()}`,
       type: 'input',
@@ -396,8 +476,63 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       timestamp: Date.now(),
     };
 
-    const execution = simulateTerminalCommand(trimmed, step.expectedCommands || [], step.title);
+    const execution = simulateTerminalCommand(trimmed, step, get().isProjectCreated);
 
+    // 4. Handle Mistake Condition
+    if (execution.isMistake) {
+      const mistake: TerminalMistake = {
+        id: `mistake-${Date.now()}`,
+        rawCommand: trimmed,
+        expectedCommands: step.expectedCommands || [],
+        reasonTitle: execution.mistakeDetails?.reasonTitle || 'Perintah Tidak Sesuai Modul Serkom',
+        explanation:
+          execution.mistakeDetails?.explanation ||
+          'Perintah yang dijalankan tidak sesuai dengan instruksi modul Serkom.',
+        createdFiles: execution.mistakeDetails?.unwantedFiles || [],
+        snapshot,
+      };
+
+      const outputEntry: TerminalLogEntry = {
+        id: `out-${Date.now()}`,
+        type: 'warning',
+        content: execution.output,
+        timestamp: Date.now() + 1,
+        mistake,
+      };
+
+      // If the command generated mock unwanted files (like OrderDetailController.php for -mcr),
+      // inject them into the virtual workspace so the student visibly notices the unwanted file in the tree!
+      let newVirtualFiles = { ...virtualFiles };
+      let newOpenTabs = [...get().openTabs];
+      let newActiveFilePath = get().activeFilePath;
+
+      if (execution.newFiles) {
+        newVirtualFiles = { ...newVirtualFiles, ...execution.newFiles };
+        const firstUnwanted = execution.mistakeDetails?.unwantedFiles?.[0];
+        if (firstUnwanted) {
+          newActiveFilePath = firstUnwanted;
+          if (!newOpenTabs.includes(firstUnwanted)) {
+            newOpenTabs.push(firstUnwanted);
+          }
+        }
+      }
+
+      const updatedTree = buildFileTreeFromPaths(newVirtualFiles);
+
+      set((state) => ({
+        activeMistake: mistake,
+        terminalLogs: [...state.terminalLogs, inputEntry, outputEntry],
+        commandHistory: [...state.commandHistory, trimmed],
+        historyIndex: -1,
+        virtualFiles: newVirtualFiles,
+        fileTree: updatedTree,
+        activeFilePath: newActiveFilePath,
+        openTabs: newOpenTabs,
+      }));
+      return;
+    }
+
+    // 5. Handle Valid Command Execution
     const outputEntry: TerminalLogEntry = {
       id: `out-${Date.now()}`,
       type: execution.type,
@@ -415,64 +550,52 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     let newActiveFilePath = get().activeFilePath;
     let newOpenTabs = [...get().openTabs];
 
-    const normalizedCmd = trimmed.toLowerCase().replace(/\s+/g, ' ');
-
-    // 1. composer create-project
-    if (normalizedCmd.includes('composer create-project')) {
-      newVirtualFiles = { ...newVirtualFiles, ...BASE_LARAVEL_FILES };
-      newProjectCreated = true;
-      newActiveFilePath = '.env';
-      newOpenTabs = ['.env'];
+    if (execution.newFiles) {
+      newVirtualFiles = { ...newVirtualFiles, ...execution.newFiles };
     }
 
-    // 2. cd pesanmakan
+    const normalizedCmd = trimmed.toLowerCase().replace(/\s+/g, ' ');
+
+    // Directory & File triggers
+    if (normalizedCmd.includes('composer create-project')) {
+      newProjectCreated = true;
+      newActiveFilePath = '.env';
+      if (!newOpenTabs.includes('.env')) newOpenTabs.push('.env');
+    }
+
     if (normalizedCmd.includes('cd pesanmakan')) {
       newCwd = 'C:\\laragon\\www\\pesanmakan';
     } else if (normalizedCmd === 'cd ..' || normalizedCmd === 'cd..') {
       newCwd = 'C:\\laragon\\www';
     }
 
-    // 3. php artisan make:model Food -mcr
     if (normalizedCmd.includes('make:model food')) {
-      newVirtualFiles = { ...newVirtualFiles, ...FOOD_MCR_FILES };
       newActiveFilePath = 'database/migrations/2025_01_01_000001_create_foods_table.php';
       if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
     }
 
-    // 4. php artisan make:model Order -mcr
     if (normalizedCmd.includes('make:model order') && !normalizedCmd.includes('orderdetail')) {
-      newVirtualFiles = { ...newVirtualFiles, ...ORDER_MCR_FILES };
       newActiveFilePath = 'database/migrations/2025_01_01_000002_create_orders_table.php';
       if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
     }
 
-    // 5. php artisan make:model OrderDetail -m
     if (normalizedCmd.includes('make:model orderdetail')) {
-      newVirtualFiles = { ...newVirtualFiles, ...ORDER_DETAIL_M_FILES };
       newActiveFilePath = 'database/migrations/2025_01_01_000003_create_order_details_table.php';
       if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
     }
 
-    // 6. php artisan make:seeder FoodSeeder
-    if (normalizedCmd.includes('make:seeder foodseeder')) {
-      newVirtualFiles = { ...newVirtualFiles, ...FOOD_SEEDER_FILES };
-      newActiveFilePath = 'database/seeders/FoodSeeder.php';
-      if (!newOpenTabs.includes(newActiveFilePath)) newOpenTabs.push(newActiveFilePath);
-    }
-
-    // 7. Breeze install
     if (normalizedCmd.includes('breeze:install') || normalizedCmd.includes('require laravel/breeze')) {
-      newVirtualFiles = { ...newVirtualFiles, ...BREEZE_BLADE_FILES };
       newBreezeInstalled = true;
     }
 
-    // 8. storage:link
     if (normalizedCmd.includes('storage:link')) {
       newStorageLinked = true;
     }
 
-    // 9. migrate:fresh --seed
-    if (normalizedCmd.includes('migrate:fresh') || (normalizedCmd.includes('migrate') && normalizedCmd.includes('--seed'))) {
+    if (
+      normalizedCmd.includes('migrate:fresh') ||
+      (normalizedCmd.includes('migrate') && normalizedCmd.includes('--seed'))
+    ) {
       newMigrated = true;
       newMockDb = createInitialMockDatabase();
     }
@@ -498,6 +621,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     }
 
     set((state) => ({
+      activeMistake: null,
       terminalLogs: [...state.terminalLogs, inputEntry, outputEntry],
       commandHistory: [...state.commandHistory, trimmed],
       historyIndex: -1,
@@ -518,6 +642,48 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       get().validateCurrentFile();
     }
   },
+
+  undoMistake: () => {
+    const { activeMistake } = get();
+    if (!activeMistake) return;
+
+    const { snapshot, rawCommand, expectedCommands, createdFiles } = activeMistake;
+
+    const rollbackLog: TerminalLogEntry = {
+      id: `rb-${Date.now()}`,
+      type: 'rollback',
+      content: [
+        '↩️ [ROLLBACK BERHASIL]',
+        `Perintah "${rawCommand}" telah dibatalkan.`,
+        ...(createdFiles && createdFiles.length > 0
+          ? [`File berlebih telah dihapus: ${createdFiles.join(', ')}`]
+          : []),
+        'Workspace dikembalikan ke kondisi bersih sebelum perintah salah dijalankan.',
+        '',
+        'Silakan ketik perintah yang benar sesuai modul:',
+        ...(expectedCommands.length > 0
+          ? expectedCommands.map((c) => `  $ ${c}`)
+          : ['  (Langkah ini tidak memerlukan perintah terminal)']),
+      ].join('\n'),
+      timestamp: Date.now(),
+    };
+
+    set((state) => ({
+      virtualFiles: snapshot.virtualFiles,
+      fileTree: snapshot.fileTree,
+      activeFilePath: snapshot.activeFilePath,
+      openTabs: snapshot.openTabs,
+      criteriaStatus: snapshot.criteriaStatus,
+      terminalCwd: snapshot.terminalCwd,
+      isProjectCreated: snapshot.isProjectCreated,
+      isMigrated: snapshot.isMigrated,
+      isStorageLinked: snapshot.isStorageLinked,
+      isBreezeInstalled: snapshot.isBreezeInstalled,
+      activeMistake: null,
+      terminalLogs: [...state.terminalLogs, rollbackLog],
+    }));
+  },
+
 
   clearTerminal: () => {
     set({
@@ -690,6 +856,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       spotlightTarget: null,
       isGraduationModalOpen: false,
       isPanduanModalOpen: false,
+      activeMistake: null,
     });
     get().validateCurrentFile();
   },
