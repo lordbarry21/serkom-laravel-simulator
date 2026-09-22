@@ -6,6 +6,7 @@ import { useSimulatorStore } from '@/store/useSimulatorStore';
 import { CriteriaChecklist } from './CriteriaChecklist';
 import { StepNavigation } from '../layout/StepNavigation';
 import { MarkdownRenderer } from './MarkdownRenderer';
+import { CodeLocationCard } from './CodeLocationCard';
 
 export function InstructionPanel() {
   const { getCurrentStep, openFile, setRightTab } = useSimulatorStore();
@@ -41,7 +42,7 @@ export function InstructionPanel() {
 
       {/* Scrollable Body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs leading-relaxed text-zinc-300">
-        {/* Theory / Memory Cheat Sheet Card */}
+        {/* Peta Konsep */}
         {currentStep.theorySummary && (
           <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200 space-y-1">
             <div className="flex items-center gap-1.5 font-semibold text-amber-300 text-xs">
@@ -53,6 +54,9 @@ export function InstructionPanel() {
             </p>
           </div>
         )}
+
+        {/* Clear Code Placement Guide (Where & How to write) */}
+        <CodeLocationCard />
 
         {/* Live Criteria Checklist */}
         <CriteriaChecklist />
