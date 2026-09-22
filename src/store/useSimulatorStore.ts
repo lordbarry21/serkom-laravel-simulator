@@ -122,19 +122,13 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     {
       id: 'init-1',
       type: 'info',
-      content: 'Selamat datang di Simulator Ujikom / Serkom Laravel Pesan Makan.',
+      content: 'Windows PowerShell\nCopyright (C) Microsoft Corporation. All rights reserved.\n\nWorkspace siap. Silakan ketik perintah sesuai langkah panduan.',
       timestamp: Date.now(),
-    },
-    {
-      id: 'init-2',
-      type: 'output',
-      content: 'Workspace saat ini bersih dari 0. Silakan ikuti instruksi Langkah 1 untuk membuat proyek.',
-      timestamp: Date.now() + 1,
     },
   ],
   commandHistory: [],
   historyIndex: -1,
-  terminalCwd: '~',
+  terminalCwd: 'C:\\laragon\\www',
 
   validationResult: { isValid: false, missingRequirements: [], hasError: false },
   hintLevel: 0,
@@ -368,7 +362,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
       validationResult: { isValid: true, missingRequirements: [], hasError: false },
       completedStepIds: new Set(state.completedStepIds).add(step.id),
       mockDb: newMockDb,
-      terminalCwd: projectCreated ? '~/pesanmakan' : state.terminalCwd,
+      terminalCwd: projectCreated ? 'C:\\laragon\\www\\pesanmakan' : state.terminalCwd,
       terminalLogs: [
         ...state.terminalLogs,
         {
@@ -385,7 +379,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
     const trimmed = command.trim();
     if (!trimmed) return;
 
-    if (trimmed.toLowerCase() === 'clear') {
+    if (trimmed.toLowerCase() === 'clear' || trimmed.toLowerCase() === 'cls') {
       get().clearTerminal();
       return;
     }
@@ -433,7 +427,9 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
 
     // 2. cd pesanmakan
     if (normalizedCmd.includes('cd pesanmakan')) {
-      newCwd = '~/pesanmakan';
+      newCwd = 'C:\\laragon\\www\\pesanmakan';
+    } else if (normalizedCmd === 'cd ..' || normalizedCmd === 'cd..') {
+      newCwd = 'C:\\laragon\\www';
     }
 
     // 3. php artisan make:model Food -mcr
@@ -686,7 +682,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
           timestamp: Date.now(),
         },
       ],
-      terminalCwd: '~',
+      terminalCwd: 'C:\\laragon\\www',
       mockDb: { foods: [], orders: [], order_details: [], users: [] },
       activeRoute: '/',
       activeRightTab: 'terminal',

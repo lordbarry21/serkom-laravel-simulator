@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Terminal as TerminalIcon, Trash2, CornerDownLeft, Sparkles, HelpCircle } from 'lucide-react';
 import { useSimulatorStore } from '@/store/useSimulatorStore';
 
 export function VirtualTerminal() {
@@ -10,16 +9,12 @@ export function VirtualTerminal() {
     commandHistory,
     terminalCwd,
     executeTerminalCommand,
-    clearTerminal,
-    getCurrentStep,
   } = useSimulatorStore();
 
   const [inputVal, setInputVal] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
   const logEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const currentStep = getCurrentStep();
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,76 +48,21 @@ export function VirtualTerminal() {
     }
   };
 
-  const handleQuickCommand = (cmd: string) => {
-    setInputVal(cmd);
-    inputRef.current?.focus();
-  };
-
   return (
     <div
-      className="h-full flex flex-col bg-[#0c0c0e] text-zinc-200 font-mono text-xs overflow-hidden select-text"
+      className="h-full flex flex-col bg-[#0c0c0e] text-zinc-200 font-mono text-[12.5px] overflow-hidden select-text cursor-text"
       onClick={() => inputRef.current?.focus()}
     >
-      {/* Terminal Header */}
-      <div className="h-9 px-3 bg-[#16161a] border-b border-zinc-800/80 flex items-center justify-between select-none">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-          </div>
-          <span className="text-[11px] font-bold text-zinc-300 ml-1 flex items-center gap-1">
-            <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
-            <span>bash: {terminalCwd}</span>
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              clearTerminal();
-            }}
-            className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
-            title="Bersihkan Terminal"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Suggested Quick Commands for this Step */}
-      {currentStep.expectedCommands && currentStep.expectedCommands.length > 0 && (
-        <div className="px-3 py-1.5 bg-zinc-900/60 border-b border-zinc-800/50 flex items-center gap-2 overflow-x-auto no-scrollbar select-none">
-          <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">
-            Saran Perintah:
-          </span>
-          {currentStep.expectedCommands.map((cmd) => (
-            <button
-              key={cmd}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleQuickCommand(cmd);
-              }}
-              className="text-[11px] px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-emerald-400 border border-emerald-500/30 shrink-0 transition"
-              title="Klik untuk mengisi input terminal"
-            >
-              {cmd}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Terminal Log Outputs */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1.5 leading-relaxed font-mono select-text">
+      {/* Scrollable PowerShell Output Stream */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 leading-relaxed select-text">
         {terminalLogs.map((log) => {
           if (log.type === 'input') {
             return (
-              <div key={log.id} className="flex items-start gap-1.5 text-zinc-100">
-                <span className="text-emerald-400 font-bold select-none">
-                  user@serkom:{terminalCwd}$
+              <div key={log.id} className="flex items-start gap-2 text-zinc-100">
+                <span className="text-sky-400 font-semibold select-none shrink-0">
+                  PS {terminalCwd}&gt;
                 </span>
-                <span className="font-bold text-white">{log.content}</span>
+                <span className="text-white font-medium">{log.content}</span>
               </div>
             );
           }
@@ -131,7 +71,7 @@ export function VirtualTerminal() {
             return (
               <div
                 key={log.id}
-                className="text-red-400 bg-red-950/20 border-l-2 border-red-500 pl-2 py-1 my-1 text-[11.5px] whitespace-pre-line"
+                className="text-red-400 bg-red-950/25 border-l-2 border-red-500 pl-2.5 py-1 my-1 text-[11.5px] whitespace-pre-line"
               >
                 {log.content}
               </div>
@@ -142,7 +82,7 @@ export function VirtualTerminal() {
             return (
               <div
                 key={log.id}
-                className="text-cyan-300 font-mono text-[11px] whitespace-pre-line leading-snug py-0.5"
+                className="text-cyan-300 font-mono text-[11.5px] whitespace-pre-line leading-snug py-0.5"
               >
                 {log.content}
               </div>
@@ -163,36 +103,26 @@ export function VirtualTerminal() {
             </div>
           );
         })}
-        <div ref={logEndRef} />
-      </div>
 
-      {/* Terminal Input Line */}
-      <div className="p-2.5 bg-[#121215] border-t border-zinc-800/80 flex items-center gap-1.5">
-        <span className="text-emerald-400 font-bold select-none shrink-0">
-          user@serkom:{terminalCwd}$
-        </span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ketik perintah artisan/composer di sini..."
-          className="flex-1 bg-transparent border-none outline-none text-white font-mono text-xs placeholder:text-zinc-600"
-          autoFocus
-        />
-        <button
-          onClick={() => {
-            if (inputVal.trim()) {
-              executeTerminalCommand(inputVal);
-              setInputVal('');
-            }
-          }}
-          className="p-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition shrink-0"
-          title="Kirim (Enter)"
-        >
-          <CornerDownLeft className="w-3.5 h-3.5" />
-        </button>
+        {/* Windows PowerShell Active Prompt Line */}
+        <div className="flex items-center gap-2 pt-0.5 text-zinc-100">
+          <span className="text-sky-400 font-semibold select-none shrink-0">
+            PS {terminalCwd}&gt;
+          </span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-1 bg-transparent border-none outline-none text-white font-mono text-[12.5px] p-0 m-0 focus:ring-0 focus:outline-none placeholder:text-zinc-600"
+            autoFocus
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </div>
+
+        <div ref={logEndRef} />
       </div>
     </div>
   );
