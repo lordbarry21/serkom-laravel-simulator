@@ -1,0 +1,36 @@
+# Node dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Debug and logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Confidential study modules and guide files (DO NOT SPILL)
+*.docx
+*.doc
+*.txt
+/MODUL*
+/modul*
+/PANDUAN*
+PANDUAN_LENGKAP_SERKOM_PESAN_MAKAN.md
+PANDUAN_LENGKAP_SERKOM_PESAN_MAKAN.txt
