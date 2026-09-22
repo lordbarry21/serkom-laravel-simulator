@@ -6,8 +6,13 @@ import { useSimulatorStore } from '@/store/useSimulatorStore';
 import { getCodeLocationGuide } from '@/data/codeLocationGuides';
 
 export function CodeLocationCard() {
-  const { getCurrentStep, activeFilePath, openFile, applyAutocomplete } =
-    useSimulatorStore();
+  const {
+    getCurrentStep,
+    activeFilePath,
+    openFile,
+    applyAutocomplete,
+    isProjectCreated,
+  } = useSimulatorStore();
   const currentStep = getCurrentStep();
 
   const [hasCopied, setHasCopied] = useState(false);
@@ -16,6 +21,21 @@ export function CodeLocationCard() {
 
   // If this step does not involve code editing and has no target file, do not render
   if (!guide && !currentStep.targetFilePath) return null;
+
+  // In Step 1: Only show .env edit instructions AFTER project has been created via composer create-project
+  if (currentStep.stepNumber === 1 && !isProjectCreated) {
+    return (
+      <div className="rounded-xl border border-zinc-800 bg-[#0d1117] p-3 space-y-1.5 text-zinc-300">
+        <div className="flex items-center gap-2 text-zinc-400 font-semibold text-xs">
+          <FileCode className="w-3.5 h-3.5 text-zinc-500" />
+          <span>Tahap 2: Edit .env (Setelah Proyek Selesai Dibuat)</span>
+        </div>
+        <p className="text-[11.5px] text-zinc-400 leading-relaxed">
+          Jalankan perintah terminal <code className="text-emerald-400 font-mono">composer create-project</code> di atas terlebih dahulu. Setelah proyek terbuat, panduan edit file <code className="text-sky-300 font-mono">.env</code> akan langsung aktif di sini.
+        </p>
+      </div>
+    );
+  }
 
   const targetFile = guide?.targetFile || currentStep.targetFilePath || '';
   const isCurrentlyOpen = activeFilePath === targetFile;
@@ -26,6 +46,7 @@ export function CodeLocationCard() {
     setHasCopied(true);
     setTimeout(() => setHasCopied(false), 2000);
   };
+
 
   return (
     <div className="rounded-xl border border-sky-500/40 bg-[#0f172a]/60 backdrop-blur p-3.5 space-y-3 shadow-lg ring-1 ring-sky-500/20 text-zinc-100 animate-in fade-in duration-200">

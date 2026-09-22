@@ -10,6 +10,7 @@ import {
   Copy,
   Check,
   MapPin,
+  Terminal,
 } from 'lucide-react';
 import { useSimulatorStore } from '@/store/useSimulatorStore';
 import { getCodeLocationGuide } from '@/data/codeLocationGuides';
@@ -22,6 +23,8 @@ export function ValidationBanner() {
     openFile,
     applyAutocomplete,
     setIsHintModalOpen,
+    isProjectCreated,
+    setRightTab,
   } = useSimulatorStore();
 
   const [hasCopied, setHasCopied] = useState(false);
@@ -31,6 +34,32 @@ export function ValidationBanner() {
 
   // If this step does not require code editing, no banner needed
   if (!hasCodeCriteria || !currentStep.targetFilePath) return null;
+
+  // In Step 1: If project is not created yet, do not show wrong file alert!
+  if (currentStep.stepNumber === 1 && !isProjectCreated) {
+    return (
+      <div className="bg-[#081710] border-b border-emerald-500/30 px-3.5 py-2 flex items-center justify-between text-xs text-emerald-200 select-none animate-in fade-in duration-200">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>
+            <strong className="text-emerald-300">Tahap 1 (Inisialisasi Proyek):</strong> Jalankan{' '}
+            <code className="bg-black/60 px-1.5 py-0.5 rounded font-mono text-white font-semibold">
+              composer create-project laravel/laravel pesanmakan
+            </code>{' '}
+            di terminal.
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setRightTab('terminal')}
+          className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] transition shrink-0 flex items-center gap-1 shadow"
+        >
+          <span>Ke Terminal</span>
+        </button>
+      </div>
+    );
+  }
 
   const isTargetFile = activeFilePath === currentStep.targetFilePath;
   const guide = getCodeLocationGuide(currentStep.id, currentStep.stepNumber);
@@ -49,7 +78,9 @@ export function ValidationBanner() {
         <div className="flex items-center gap-2 overflow-hidden">
           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
           <div className="leading-tight">
-            <span className="font-bold text-amber-300">File Berbeda Terbuka! </span>
+            <span className="font-bold text-amber-300">
+              {activeFilePath ? 'File Berbeda Terbuka!' : 'Belum Ada File Terbuka:'}{' '}
+            </span>
             <span className="text-zinc-300">
               Langkah {currentStep.stepNumber} harus dikerjakan pada:
             </span>

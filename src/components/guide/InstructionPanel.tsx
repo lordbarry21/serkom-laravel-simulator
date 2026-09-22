@@ -7,6 +7,7 @@ import { CriteriaChecklist } from './CriteriaChecklist';
 import { StepNavigation } from '../layout/StepNavigation';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { CodeLocationCard } from './CodeLocationCard';
+import { TerminalCommandCard } from './TerminalCommandCard';
 
 export function InstructionPanel() {
   const { getCurrentStep, openFile, setRightTab } = useSimulatorStore();
@@ -54,6 +55,9 @@ export function InstructionPanel() {
             </p>
           </div>
         )}
+
+        {/* Terminal Commands Card (If step has commands to run) */}
+        <TerminalCommandCard />
 
         {/* Clear Code Placement Guide (Where & How to write) */}
         <CodeLocationCard />
