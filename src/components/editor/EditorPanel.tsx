@@ -55,7 +55,7 @@ export function EditorPanel() {
       </div>
 
       {/* VS Code Mock Status Bar */}
-      <div className="h-6 bg-[#007acc] text-white px-3 flex items-center justify-between text-[11px] font-mono select-none">
+      <div className="h-6 bg-[#161618] border-t border-zinc-800 text-zinc-300 px-3 flex items-center justify-between text-[11px] font-mono select-none">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 font-semibold">
             <Code2 className="w-3 h-3" />

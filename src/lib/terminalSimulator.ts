@@ -233,7 +233,7 @@ export function simulateTerminalCommand(
 
   // If command was not recognized or has typo
   const suggestion = expectedCommands.length > 0
-    ? `\n💡 Perintah yang diharapkan pada langkah "${stepTitle}":\n   👉 \x1b[32m${expectedCommands.join('\n   👉 ')}\x1b[0m`
+    ? `\n[Petunjuk] Perintah yang diharapkan pada langkah "${stepTitle}":\n   $ \x1b[32m${expectedCommands.join('\n   $ ')}\x1b[0m`
     : '\nKetik "help" untuk melihat daftar perintah yang didukung.';
 
   return {

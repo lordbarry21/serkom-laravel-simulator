@@ -29,6 +29,19 @@ export function PanduanModal() {
   );
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
+  React.useEffect(() => {
+    if (!isPanduanModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsPanduanModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPanduanModalOpen, setIsPanduanModalOpen]);
+
   if (!isPanduanModalOpen) return null;
 
   const handleCopyCommand = (cmd: string, idx: number) => {
@@ -43,18 +56,23 @@ export function PanduanModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 animate-in fade-in duration-200 select-none">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Buku Panduan dan Alur Hafalan Serkom"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-5 animate-in fade-in duration-200 select-none"
+    >
       <div className="bg-[#18181b] border border-zinc-700 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Topbar */}
         <div className="p-4 border-b border-zinc-800 bg-[#1f1f23] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-md">
+            <div className="p-2 rounded-xl bg-red-600 text-white shadow-sm">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
                 <span>Buku Panduan & Alur Hafalan Serkom</span>
-                <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full border border-red-500/30">
+                <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700">
                   LSP / BNSP
                 </span>
               </h2>
@@ -101,7 +119,7 @@ export function PanduanModal() {
             <div className="space-y-4">
               <div className="p-3 rounded-xl bg-blue-950/30 border border-blue-500/30 text-blue-200">
                 <span className="font-bold text-xs text-blue-300 block mb-1">
-                  💡 Alur Kehidupan Data Restoran:
+                  Alur Kehidupan Data Restoran:
                 </span>
                 <p className="text-[11.5px] leading-relaxed">
                   Untuk menghafal seluruh aplikasi di luar kepala tanpa pusing, ingat alurnya:

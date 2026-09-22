@@ -60,10 +60,10 @@ export function StepNavigation() {
         <button
           onClick={nextStep}
           disabled={!isCompleted}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition duration-200 shadow-md ${
+          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-150 shadow-sm ${
             isCompleted
-              ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white shadow-emerald-950/50 animate-pulse-glow cursor-pointer'
-              : 'bg-zinc-800/90 text-zinc-500 border border-zinc-800 cursor-not-allowed'
+              ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer'
+              : 'bg-zinc-800 text-zinc-400 border border-zinc-700/60 cursor-not-allowed'
           }`}
         >
           {isCompleted ? (
@@ -73,7 +73,7 @@ export function StepNavigation() {
             </>
           ) : (
             <>
-              <Lock className="w-3.5 h-3.5 text-zinc-500" />
+              <Lock className="w-3.5 h-3.5 text-zinc-400" />
               <span>Selesaikan Kriteria</span>
             </>
           )}

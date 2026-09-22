@@ -374,7 +374,7 @@ export const useSimulatorStore = create<SimulatorStore>((set, get) => ({
         {
           id: `ac-${Date.now()}`,
           type: 'info',
-          content: `💡 Solusi otomatis & file prasyarat diterapkan untuk langkah "${step.title}".`,
+          content: `[Info] Solusi otomatis dan file prasyarat diterapkan untuk langkah "${step.title}".`,
           timestamp: Date.now(),
         },
       ],

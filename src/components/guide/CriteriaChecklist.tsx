@@ -34,10 +34,10 @@ export function CriteriaChecklist() {
   return (
     <div className="bg-[#18181b]/80 border border-zinc-800 rounded-xl p-3.5 space-y-2.5">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-          <span>Kriteria Kelulusan Langkah Ini:</span>
+        <h4 className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+          <span>Kriteria Kelulusan Langkah Ini</span>
         </h4>
-        <span className="text-[11px] font-medium text-zinc-500">
+        <span className="text-[11px] font-medium text-zinc-400">
           {currentStep.criteria.filter((c) => criteriaStatus[c.id]).length} /{' '}
           {currentStep.criteria.length} Terpenuhi
         </span>
@@ -60,20 +60,20 @@ export function CriteriaChecklist() {
                 {isDone ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 fill-emerald-400/20" />
                 ) : (
-                  <CircleDashed className="w-4 h-4 text-amber-400 animate-spin-slow" />
+                  <CircleDashed className="w-4 h-4 text-amber-400/80" />
                 )}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700">
                     {getCriterionIcon(criterion.type)}
                     {getCriterionBadge(criterion.type)}
                   </span>
                   {criterion.targetPath && (
                     <button
                       onClick={() => openFile(criterion.targetPath!)}
-                      className="text-[10px] text-blue-400 hover:text-blue-300 font-mono hover:underline cursor-pointer"
+                      className="text-[10px] text-sky-400 hover:text-sky-300 font-mono hover:underline cursor-pointer"
                       title="Klik untuk membuka file di editor"
                     >
                       {criterion.targetPath.split('/').pop()}
@@ -82,9 +82,9 @@ export function CriteriaChecklist() {
                   {criterion.type === 'ui_action' && (
                     <button
                       onClick={() => setRightTab('preview')}
-                      className="text-[10px] text-purple-400 hover:text-purple-300 font-medium hover:underline cursor-pointer"
+                      className="text-[10px] text-purple-300 hover:text-purple-200 font-medium hover:underline cursor-pointer"
                     >
-                      Buka Preview 👉
+                      Buka Preview
                     </button>
                   )}
                 </div>

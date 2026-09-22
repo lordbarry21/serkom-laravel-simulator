@@ -56,8 +56,8 @@ export function ThreePanelLayout() {
             </button>
           </div>
 
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span className="text-[10px] text-zinc-400 font-mono">127.0.0.1:8000</span>
           </div>
         </div>

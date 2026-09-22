@@ -21,6 +21,19 @@ export function CustomerCatalog() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  React.useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen]);
+
   const currentStep = getCurrentStep();
   const isStep14 = currentStep.id === 'm3-step-14';
 

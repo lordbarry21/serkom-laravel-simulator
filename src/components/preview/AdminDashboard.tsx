@@ -108,18 +108,18 @@ export function AdminDashboard() {
                       </td>
                       <td className="p-3.5">
                         {order.status === 'pending' && (
-                          <span className="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded uppercase">
-                            PENDING
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] px-2 py-0.5 rounded uppercase">
+                            Pending
                           </span>
                         )}
                         {order.status === 'completed' && (
-                          <span className="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded uppercase">
-                            SELESAI
+                          <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-[10px] px-2 py-0.5 rounded uppercase">
+                            Selesai
                           </span>
                         )}
                         {order.status === 'cancelled' && (
-                          <span className="bg-rose-100 text-rose-800 font-bold text-[10px] px-2 py-0.5 rounded uppercase">
-                            BATAL
+                          <span className="bg-rose-100 text-rose-900 border border-rose-300 font-bold text-[10px] px-2 py-0.5 rounded uppercase">
+                            Batal
                           </span>
                         )}
                       </td>
@@ -146,8 +146,21 @@ export function AdminDashboard() {
 
                 {mockDb.orders.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400">
-                      Belum ada pesanan masuk.
+                    <td colSpan={7} className="p-8 text-center text-slate-500">
+                      <div className="space-y-2 max-w-sm mx-auto">
+                        <p className="font-semibold text-slate-700 text-sm">Belum Ada Pesanan Masuk</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          Antrean pesanan masih kosong. Buat transaksi pesanan baru melalui menu Katalog Pelanggan.
+                        </p>
+                        <div>
+                          <button
+                            onClick={() => setPreviewRoute('/')}
+                            className="inline-flex items-center px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition"
+                          >
+                            Buka Katalog Pelanggan
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 )}

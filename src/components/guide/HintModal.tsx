@@ -16,6 +16,19 @@ export function HintModal() {
 
   const [copied, setCopied] = React.useState(false);
 
+  React.useEffect(() => {
+    if (!isHintModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsHintModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isHintModalOpen, setIsHintModalOpen]);
+
   if (!isHintModalOpen) return null;
 
   const currentStep = getCurrentStep();
@@ -28,7 +41,12 @@ export function HintModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Petunjuk Langkah"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+    >
       <div className="bg-[#18181b] border border-zinc-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Modal Header */}
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-[#1f1f23]">
@@ -70,22 +88,22 @@ export function HintModal() {
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-bold text-[11px] uppercase tracking-wider text-amber-400">
+                    <span className="font-semibold text-[11px] text-amber-400">
                       Petunjuk #{idx + 1}
                     </span>
                     {!isRevealed && idx === hintLevel + 1 && (
                       <button
                         onClick={() => setHintLevel(idx)}
-                        className="text-[10px] font-semibold text-blue-400 hover:underline"
+                        className="text-[10px] font-semibold text-sky-400 hover:text-sky-300 hover:underline"
                       >
-                        Buka Petunjuk Ini 🔓
+                        Buka Petunjuk
                       </button>
                     )}
                   </div>
                   {isRevealed ? (
                     <p className="leading-relaxed text-zinc-200">{hint}</p>
                   ) : (
-                    <p className="italic text-zinc-600">Klik &quot;Buka Petunjuk Ini&quot; untuk melihat...</p>
+                    <p className="italic text-zinc-400">Klik &quot;Buka Petunjuk&quot; untuk melihat...</p>
                   )}
                 </div>
               );

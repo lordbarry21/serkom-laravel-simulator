@@ -22,46 +22,49 @@ export function CompletionModal() {
   const { isGraduationModalOpen, setIsGraduationModalOpen, resetAll } = useSimulatorStore();
 
   useEffect(() => {
+    if (!isGraduationModalOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsGraduationModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isGraduationModalOpen, setIsGraduationModalOpen]);
+
+  useEffect(() => {
     if (isGraduationModalOpen) {
-      // Fire confetti celebration!
       confetti({
-        particleCount: 120,
+        particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
       });
-      setTimeout(() => {
-        confetti({
-          particleCount: 80,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-        });
-        confetti({
-          particleCount: 80,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-        });
-      }, 300);
     }
   }, [isGraduationModalOpen]);
 
   if (!isGraduationModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-[#18181b] border border-amber-500/40 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Kelulusan Simulator Serkom"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
+    >
+      <div className="bg-[#18181b] border border-zinc-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Banner Header */}
-        <div className="bg-gradient-to-r from-amber-600 via-rose-600 to-red-600 p-6 text-white text-center relative overflow-hidden">
+        <div className="bg-red-700 p-6 text-white text-center relative overflow-hidden">
           <div className="relative z-10">
-            <div className="inline-flex p-3 rounded-full bg-white/20 backdrop-blur-sm mb-3">
-              <Award className="w-10 h-10 text-amber-200" />
+            <div className="inline-flex p-3 rounded-full bg-white/10 mb-3">
+              <Award className="w-10 h-10 text-amber-300" />
             </div>
-            <h2 className="text-2xl font-black tracking-tight">
-              SELAMAT! ANDA 100% KOMPETEN SERKOM!
+            <h2 className="text-xl font-bold tracking-tight">
+              Selamat, Anda Telah Menyelesaikan Seluruh Modul Serkom!
             </h2>
-            <p className="text-sm text-amber-100 mt-1 max-w-md mx-auto">
-              Seluruh 4 Modul Aplikasi Pemesanan Makanan Laravel berhasil Anda selesaikan dengan sempurna.
+            <p className="text-xs text-red-100 mt-1.5 max-w-md mx-auto leading-relaxed">
+              Seluruh 4 modul aplikasi pemesanan makanan Laravel berhasil diselesaikan sesuai kriteria uji LSP/BNSP.
             </p>
           </div>
           <button

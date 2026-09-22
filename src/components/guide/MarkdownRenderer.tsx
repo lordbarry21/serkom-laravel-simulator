@@ -255,7 +255,7 @@ function renderFormattedText(text: string): React.ReactNode {
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // Split content by code blocks ```lang ... ```
+  const safeContent = content || '';
   const codeBlockRegex = /```([a-zA-Z]*)\n([\s\S]*?)```/g;
   const elements: React.ReactNode[] = [];
 
@@ -263,8 +263,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
   let match: RegExpExecArray | null;
   let elementIdx = 0;
 
-  while ((match = codeBlockRegex.exec(content)) !== null) {
-    const textBefore = content.substring(lastIndex, match.index);
+  while ((match = codeBlockRegex.exec(safeContent)) !== null) {
+    const textBefore = safeContent.substring(lastIndex, match.index);
     if (textBefore.trim()) {
       elements.push(
         <div key={elementIdx++} className="space-y-2 text-zinc-300 leading-relaxed text-xs">
@@ -280,9 +280,8 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     lastIndex = codeBlockRegex.lastIndex;
   }
 
-  // Trailing text
-  if (lastIndex < content.length) {
-    const trailingText = content.substring(lastIndex);
+  if (lastIndex < safeContent.length) {
+    const trailingText = safeContent.substring(lastIndex);
     if (trailingText.trim()) {
       elements.push(
         <div key={elementIdx++} className="space-y-2 text-zinc-300 leading-relaxed text-xs">

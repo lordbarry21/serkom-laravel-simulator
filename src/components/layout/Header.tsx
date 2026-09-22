@@ -25,20 +25,20 @@ export function Header() {
     <header className="bg-[#18181b] border-b border-[#27272a] text-zinc-200 px-4 py-2.5 flex items-center justify-between select-none z-20">
       {/* Brand & Title */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 text-white font-bold text-base shadow-md shadow-red-950/40">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-600 text-white font-bold text-base shadow-sm">
           <Code2 className="w-5 h-5" />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+            <h1 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
               Serkom Laravel Simulator
-              <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+              <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
                 Pesan Makan LSP
               </span>
             </h1>
           </div>
           <p className="text-[11px] text-zinc-400 font-medium">
-            Interactive 3-Panel EdTech Workspace &bull; 4 Modul Terpadu
+            Simulasi Uji Kompetensi Keahlian Rekayasa Perangkat Lunak
           </p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export function Header() {
           </div>
           <div className="w-28 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-red-500 to-amber-500 transition-all duration-300 rounded-full"
+              className="h-full bg-red-600 transition-all duration-300 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -113,11 +113,11 @@ export function Header() {
         {/* Panduan & Mindmap Button */}
         <button
           onClick={() => setIsPanduanModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-md shadow-red-950/40 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white shadow-sm transition"
           title="Buka Buku Panduan, Mindmap & Tabel Sintaks Keramat"
         >
           <BookOpen className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Buku Panduan &amp; Mindmap</span>
+          <span className="hidden sm:inline">Buku Panduan & Mindmap</span>
         </button>
 
         {/* Reset button */}

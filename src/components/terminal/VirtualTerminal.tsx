@@ -71,9 +71,9 @@ export function VirtualTerminal() {
             <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
           </div>
-          <span className="text-[11px] font-bold text-zinc-400 ml-1 flex items-center gap-1">
+          <span className="text-[11px] font-bold text-zinc-300 ml-1 flex items-center gap-1">
             <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
-            <span>bash — {terminalCwd}</span>
+            <span>bash: {terminalCwd}</span>
           </span>
         </div>
 
@@ -83,7 +83,7 @@ export function VirtualTerminal() {
               e.stopPropagation();
               clearTerminal();
             }}
-            className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition"
+            className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
             title="Bersihkan Terminal"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -94,7 +94,7 @@ export function VirtualTerminal() {
       {/* Suggested Quick Commands for this Step */}
       {currentStep.expectedCommands && currentStep.expectedCommands.length > 0 && (
         <div className="px-3 py-1.5 bg-zinc-900/60 border-b border-zinc-800/50 flex items-center gap-2 overflow-x-auto no-scrollbar select-none">
-          <span className="text-[10px] uppercase font-bold text-zinc-500 shrink-0">
+          <span className="text-[10px] uppercase font-bold text-zinc-400 shrink-0">
             Saran Perintah:
           </span>
           {currentStep.expectedCommands.map((cmd) => (
